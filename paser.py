@@ -145,42 +145,36 @@ def parseXml(f):
     TO DO: traverse the dom tree to extract information for your SQL tables
     """
     a = getElementsByTagNameNR(dom, 'Items')
-    i = 0
-    j = 0
-    k = 0
-    h = 0
     items = getElementsByTagNameNR(a[0], 'Item')
     
-    while i < len(items):
+    for i in items:
 
         
-        bids = getElementsByTagNameNR(items[i], 'Bids')
-        bid = getElementsByTagNameNR(bids[0], 'Bid')
+        bids =          getElementsByTagNameNR(i, 'Bids')
+        bid =           getElementsByTagNameNR(bids[0], 'Bid')
         #sacar todo lo que esta dentro del item
-        iID = str(items[i].getAttribute('ItemID'))
-        name = str(getElementsByTagNameNR(items[i], 'Name'))
-        currently = str(getElementsByTagNameNR(items[i], 'Currently'))
-        started = str(getElementsByTagNameNR(items[i], 'Started'))
-        ends = str(getElementsByTagNameNR(items[i], 'Ends'))
-        description = str(getElementsByTagNameNR(items[i], 'Description'))
-        buy_price = str(getElementsByTagNameNR(items[i], 'Buy_Price'))
-        print "" + iID
+        iID =           str(i.getAttribute('ItemID'))
+        name =          getElementText(getElementByTagNameNR(i, 'Name'))
+        currently =     transformDollar(getElementText(getElementByTagNameNR(i, 'Currently')))
+        started =       getElementText(getElementByTagNameNR(i, 'Started'))
+        ends =          getElementText(getElementByTagNameNR(i, 'Ends'))
+        description =   getElementText(getElementByTagNameNR(i, 'Description'))
+        bp =            getElementByTagNameNR(i, 'Buy_Price')
+        buy_price = 0
+        if (bp != None):
+            buy_price = getElementText(bp)
+        else:
+            buy_price = 0
 
+        print "ID: " + iID + "  NAME: " + name + "  Price: " + buy_price
 
-        j = 0
-        while j < len(bid):
-            bidder = getElementsByTagNameNR(bid[j], 'Bidder')
+        for j in bid:
+            bidder = getElementsByTagNameNR(j, 'Bidder')
             #sacar lo que esta dentro de bids
-            k = 0
-            while k < len(bidder):
+            
+            for k in bidder:
+                print ""
                 
-                k += 1
-            j += 1
-        i += 1            
-
-        
-
-
 """
 Loops through each xml files provided on the command line and passes each file
 to the parser
