@@ -12,11 +12,11 @@ including:
 1) Directory handling -- the parser takes a list of eBay xml files
 and opens each file inside of a loop. You just need to fill in the rest.
 
-2) Dollar value conversions -- the xml files store dollar value amounts in 
+2) Dollar value conversions -- the xml files store dollar value amounts in
 a string like $3,453.23 -- we provide a function to convert it to a string
 like XXXXX.xx.
 
-3) Date/time conversions -- the xml files store dates/ times in the form 
+3) Date/time conversions -- the xml files store dates/ times in the form
 Mon-DD-YY HH:MM:SS -- we wrote a function (transformDttm) that converts to the
 for YYYY-MM-DD HH:MM:SS, which will sort chronologically in SQL.
 
@@ -24,7 +24,7 @@ for YYYY-MM-DD HH:MM:SS, which will sort chronologically in SQL.
 if the element is not of #PCDATA type)
 
 5) A function to get the #PCDATA of the first subelement of a given element with
-a given tagname. (returns the empty string if the element doesn't exist or 
+a given tagname. (returns the empty string if the element doesn't exist or
 is not of #PCDATA type)
 
 6) A function to get all elements of a specific tag name that are children of a
@@ -33,8 +33,8 @@ given element
 7) A function to get only the first such child
 
 Your job is to implement the parseXml function, which is invoked on each file by
-the main function. We create the dom for you; the rest is up to you! Get familiar 
-with the functions at http://docs.python.org/library/xml.dom.minidom.html and 
+the main function. We create the dom for you; the rest is up to you! Get familiar
+with the functions at http://docs.python.org/library/xml.dom.minidom.html and
 http://docs.python.org/library/xml.dom.html
 
 Happy parsing!
@@ -45,6 +45,8 @@ from xml.dom.minidom import parse
 from re import sub
 
 columnSeparator = "<>"
+categorias = []
+paises = []
 
 # Dictionary of months used for date transformation
 MONTHS = {'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06',\
@@ -92,7 +94,7 @@ Return the text associated with the given element (which must have type
 """
 def getElementText(elem):
     if len(elem.childNodes) == 1:
-        return pcdata(elem) 
+        return pcdata(elem)
     return ''
 
 """
@@ -111,7 +113,7 @@ Converts month to a number, e.g. 'Dec' to '12'
 """
 def transformMonth(mon):
     if mon in MONTHS:
-        return MONTHS[mon] 
+        return MONTHS[mon]
     else:
         return mon
 
@@ -140,45 +142,72 @@ Parses a single xml file. Currently, there's a loop that shows how to parse
 item elements. Your job is to mirror this functionality to create all of the necessary SQL tables
 """
 def parseXml(f):
+    separador = "<>"
+    #Crear los arcivos si no existen, abrirlos e modo escribir si no
+    usersFile = open("parseados/users.bat","a+")
+    itemFile = open("parseados/items.bat","a+")
+    bidFile = open("parseados/bids.bat","a+")
+    countryFile = open("parseados/country.bat","a+")
+    categoryFile = open("parseados/categ.bat", "a+")
+    descCategoryFile = open("parseados/descCateg.bat", "a+")
+
     dom = parse(f) # creates a dom object for the supplied xml file
     """
     TO DO: traverse the dom tree to extract information for your SQL tables
     """
     a = getElementsByTagNameNR(dom, 'Items')
     items = getElementsByTagNameNR(a[0], 'Item')
-    
+
     for i in items:
 
-        
         bids =          getElementsByTagNameNR(i, 'Bids')
         bid =           getElementsByTagNameNR(bids[0], 'Bid')
         #sacar todo lo que esta dentro del item
         iID =           str(i.getAttribute('ItemID'))
         name =          getElementText(getElementByTagNameNR(i, 'Name'))
         currently =     transformDollar(getElementText(getElementByTagNameNR(i, 'Currently')))
-        started =       getElementText(getElementByTagNameNR(i, 'Started'))
-        ends =          getElementText(getElementByTagNameNR(i, 'Ends'))
+        first =     transformDollar(getElementText(getElementByTagNameNR(i, 'First_Bid')))
+        started =       transformDttm(getElementText(getElementByTagNameNR(i, 'Started')))
+        ends =          transformDttm(getElementText(getElementByTagNameNR(i, 'Ends')))
         description =   getElementText(getElementByTagNameNR(i, 'Description'))
         bp =            getElementByTagNameNR(i, 'Buy_Price')
+        sCountry =      getElementText(getElementByTagNameNR(i, 'Country'))
+        if sCountry not in paises:
+            paises.append(sCountry);
+            countryFile.write(str(paises.index(sCountry))+separador+sCountry+"\r\n")
+        sLocation =     getElementText(getElementByTagNameNR(i, 'Location'))
+        s=              getElementByTagNameNR(i, 'Seller')
+        seller =        str(s.getAttribute('UserID'))
+        sellerRating =  str(s.getAttribute('Rating'))
+        cats = getElementsByTagNameNR(i,'Category')
+        for x in cats:
+            cat = getElementText(x)
+            if cat not in categorias:
+                categorias.append(cat)
+                categoryFile.write(str(len(categorias)) + separador + cat +"\r\n")
+            descCategoryFile.write(str(iID)+separador+str(categorias.index(cat))+"\r\n")
+        usersFile.write(seller+separador+sellerRating+separador+str(paises.index(sCountry))+separador+sLocation+"\r\n")
         buy_price = 0
         if (bp != None):
             buy_price = getElementText(bp)
         else:
             buy_price = 0
 
-        print "ID: " + iID + "  NAME: " + name + "  Price: " + buy_price
+        itemFile.write(iID+separador+name+separador+seller+separador+description+separador+started+separador+ends+separador+first+separador+str(buy_price)+separador+currently+separador+first+"\r\n")
 
         for j in bid:
-            bidder = getElementsByTagNameNR(j, 'Bidder')
+            bidder = getElementByTagNameNR(j, 'Bidder')
+            time = transformDttm(getElementText(getElementByTagNameNR(j, 'Time')))
+            amount = transformDollar(getElementText(getElementByTagNameNR(j, 'Amount')))
+            bidFile.write(str(bidder.getAttribute('UserID'))+separador+amount+separador+time+separador+iID+"\r\n")
             #sacar lo que esta dentro de bids
-            
-            for k in bidder:
-                print ""
-                
+
+
 """
 Loops through each xml files provided on the command line and passes each file
 to the parser
 """
+
 def main(argv):
     if len(argv) < 2:
         print >> sys.stderr, 'Usage: python skeleton_parser.py <path to xml files>'
