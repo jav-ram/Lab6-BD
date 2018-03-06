@@ -144,12 +144,12 @@ item elements. Your job is to mirror this functionality to create all of the nec
 def parseXml(f):
     separador = "<>"
     #Crear los arcivos si no existen, abrirlos e modo escribir si no
-    usersFile = open("parseados/users.bat","a+")
-    itemFile = open("parseados/items.bat","a+")
-    bidFile = open("parseados/bids.bat","a+")
-    countryFile = open("parseados/country.bat","a+")
-    categoryFile = open("parseados/categ.bat", "a+")
-    descCategoryFile = open("parseados/descCateg.bat", "a+")
+    usersFile = open("parseados/users.dat","a+")
+    itemFile = open("parseados/items.dat","a+")
+    bidFile = open("parseados/bids.dat","a+")
+    countryFile = open("parseados/country.dat","a+")
+    categoryFile = open("parseados/categ.dat", "a+")
+    descCategoryFile = open("parseados/descCateg.dat", "a+")
 
     dom = parse(f) # creates a dom object for the supplied xml file
     """
@@ -166,7 +166,7 @@ def parseXml(f):
         iID =           str(i.getAttribute('ItemID'))
         name =          getElementText(getElementByTagNameNR(i, 'Name'))
         currently =     transformDollar(getElementText(getElementByTagNameNR(i, 'Currently')))
-        first =     transformDollar(getElementText(getElementByTagNameNR(i, 'First_Bid')))
+        first =         transformDollar(getElementText(getElementByTagNameNR(i, 'First_Bid')))
         started =       transformDttm(getElementText(getElementByTagNameNR(i, 'Started')))
         ends =          transformDttm(getElementText(getElementByTagNameNR(i, 'Ends')))
         description =   getElementText(getElementByTagNameNR(i, 'Description'))
