@@ -142,7 +142,7 @@ Parses a single xml file. Currently, there's a loop that shows how to parse
 item elements. Your job is to mirror this functionality to create all of the necessary SQL tables
 """
 def parseXml(f):
-    separador = "<>"
+    separador = "~"
     #Crear los arcivos si no existen, abrirlos e modo escribir si no
     usersFile = open("parseados/users.dat","a+")
     itemFile = open("parseados/items.dat","a+")
