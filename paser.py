@@ -212,7 +212,7 @@ def parseXml(f):
                 countryFile.write(str(paises.index(bidderCou))+separador+bidderCou+"\r\n")
             time = transformDttm(getElementText(getElementByTagNameNR(j, 'Time')))
             amount = transformDollar(getElementText(getElementByTagNameNR(j, 'Amount')))
-            bidFile.write(str(bidID)+separador+iID+str(bidder.getAttribute('UserID'))+separador+time+separador+amount+separador+"\r\n")
+            bidFile.write(str(bidID)+separador+iID+separador+str(bidder.getAttribute('UserID'))+separador+time+separador+amount+"\r\n")
             bidID = bidID + 1
             usersFile.write(str(bidder.getAttribute('UserID'))+separador+str(bidder.getAttribute('Rating'))+separador+str(paises.index(bidderCou))+separador+bidderLoc+"\r\n")
             #sacar lo que esta dentro de bids

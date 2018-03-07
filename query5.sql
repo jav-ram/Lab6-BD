@@ -1,0 +1,1 @@
+SELECT count(DISTINCT UserID) FROM User WHERE (Rating > 1000);

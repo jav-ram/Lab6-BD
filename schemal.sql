@@ -9,11 +9,11 @@ CREATE TABLE Item (
 	ItemID 		int,
 	UserID 		varchar[25],
 	Name 		varchar[15],
-	Currently	varchar[20],
-	First_bid	varchar[20],	
+	Currently	REAL,
+	First_bid	REAL,	
 	started		date,
 	ends		date,
-	buy_price	varchar[20],
+	buy_price	REAL,
 	Description	varchar[1000],
 	PRIMARY KEY (ItemID),
 	FOREIGN KEY (UserID) REFERENCES User(UserID)
@@ -37,9 +37,9 @@ CREATE TABLE Country (
 CREATE TABLE Bid (
 	BidID		int,
 	ItemID 	int,
-	UserID		int,
+	UserID		varchar[25],
 	Time		datetime,
-	Amount	varchar[20],
+	Amount	REAL,
 	PRIMARY KEY(BidID),
 	FOREIGN KEY(ItemID) REFERENCES Item(ItemID),
 	FOREIGN KEY(UserID) REFERENCES User(UserID)	
@@ -55,3 +55,5 @@ CREATE TABLE Category (
 	Nombre	varchar[20],
 	PRIMARY KEY(CategoryID)
 );
+
+
