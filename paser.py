@@ -47,6 +47,7 @@ from re import sub
 columnSeparator = "<>"
 categorias = []
 paises = []
+bidID = 0;
 
 # Dictionary of months used for date transformation
 MONTHS = {'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06',\
@@ -142,7 +143,7 @@ Parses a single xml file. Currently, there's a loop that shows how to parse
 item elements. Your job is to mirror this functionality to create all of the necessary SQL tables
 """
 def parseXml(f):
-    separador = "~"
+    separador = ">"
     #Crear los arcivos si no existen, abrirlos e modo escribir si no
     usersFile = open("parseados/users.dat","a+")
     itemFile = open("parseados/items.dat","a+")
@@ -150,7 +151,6 @@ def parseXml(f):
     countryFile = open("parseados/country.dat","a+")
     categoryFile = open("parseados/categ.dat", "a+")
     descCategoryFile = open("parseados/descCateg.dat", "a+")
-
     dom = parse(f) # creates a dom object for the supplied xml file
     """
     TO DO: traverse the dom tree to extract information for your SQL tables
@@ -159,7 +159,7 @@ def parseXml(f):
     items = getElementsByTagNameNR(a[0], 'Item')
 
     for i in items:
-
+        global bidID
         bids =          getElementsByTagNameNR(i, 'Bids')
         bid =           getElementsByTagNameNR(bids[0], 'Bid')
         #sacar todo lo que esta dentro del item
@@ -193,13 +193,28 @@ def parseXml(f):
         else:
             buy_price = 0
 
-        itemFile.write(iID+separador+name+separador+seller+separador+description+separador+started+separador+ends+separador+first+separador+str(buy_price)+separador+currently+separador+first+"\r\n")
+        itemFile.write(iID+separador+seller+separador+name+separador+currently+separador+first+separador+started+separador+ends+separador+str(buy_price)+separador+description+"\r\n")
 
         for j in bid:
             bidder = getElementByTagNameNR(j, 'Bidder')
+            try:
+                bidderLoc = getElementText(getElementByTagNameNR(bidder, 'Location'))
+            except Exception as e:
+                print("No location boiiiiiii")
+                bidderLoc = "Null"
+            try:
+                bidderCou = getElementText(getElementByTagNameNR(bidder, 'Country'))
+            except Exception as e:
+                print("No PAIS boiiiiiii")
+                bidderCou = "Null"
+            if bidderCou not in paises:
+                paises.append(bidderCou);
+                countryFile.write(str(paises.index(bidderCou))+separador+bidderCou+"\r\n")
             time = transformDttm(getElementText(getElementByTagNameNR(j, 'Time')))
             amount = transformDollar(getElementText(getElementByTagNameNR(j, 'Amount')))
-            bidFile.write(str(bidder.getAttribute('UserID'))+separador+amount+separador+time+separador+iID+"\r\n")
+            bidFile.write(str(bidID)+separador+iID+str(bidder.getAttribute('UserID'))+separador+time+separador+amount+separador+"\r\n")
+            bidID = bidID + 1
+            usersFile.write(str(bidder.getAttribute('UserID'))+separador+str(bidder.getAttribute('Rating'))+separador+str(paises.index(bidderCou))+separador+bidderLoc+"\r\n")
             #sacar lo que esta dentro de bids
 
 

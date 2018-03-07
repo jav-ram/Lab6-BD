@@ -8773,6 +8773,7 @@
       <Bid>
         <Bidder UserID="Glen" Rating="345">
           <Location>Bay Area</Location>
+          <Country>Canada</Country>
         </Bidder>
         <Time>Dec-10-01 11:22:45</Time>
         <Amount>$48.38</Amount>
