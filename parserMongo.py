@@ -48,6 +48,8 @@ from re import sub
 
 client = MongoClient('localhost', 27017)
 db = client['ebay']
+Items = db['Item']
+Users = db['User']
 
 
 columnSeparator = "<>"
@@ -191,7 +193,7 @@ def parseXml(f):
             "rating":0
         }
 
-        global bidID
+        #global bidID
         bids =          getElementsByTagNameNR(i, 'Bids')
         bid =           getElementsByTagNameNR(bids[0], 'Bid')
         #sacar todo lo que esta dentro del item
@@ -212,6 +214,7 @@ def parseXml(f):
         iObj["started"] = started
         iObj["ends"] = ends
         iObj["description"] = description
+
 
 
         #SACAR TODO LO QUE ESTA DENTRO DEL USUARIO
@@ -239,6 +242,8 @@ def parseXml(f):
         if seller not in usuarios:
             usuarios.append(seller)
             usersFile.write(seller+separador+sellerRating+separador+str(paises.index(sCountry))+separador+sLocation+"\r\n")
+            #usuario
+            Users.insert_one(uObj);
         buy_price = 0
         if (bp != None):
             buy_price = getElementText(bp)
@@ -251,7 +256,6 @@ def parseXml(f):
         #SACAR TODO LO QUE ESTA DENTRO DE CADA BID
         for j in bid:
             bObj = {
-                "_id":"",
                 "bidder_id":"",
                 "time":"",
                 "amount":0.0
@@ -271,8 +275,7 @@ def parseXml(f):
             time = transformDttm(getElementText(getElementByTagNameNR(j, 'Time')))
             amount = transformDollar(getElementText(getElementByTagNameNR(j, 'Amount')))
             bidFile.write(str(bidID)+separador+iID+separador+str(bidder.getAttribute('UserID'))+separador+time+separador+amount+"\r\n")
-            bidID = bidID + 1
-            bObj["_id"] = bidID
+            
             bObj["bidder_id"] = str(bidder.getAttribute('UserID'))
             bObj["time"] = time
             bObj["amount"] = amount
@@ -284,8 +287,12 @@ def parseXml(f):
                 uObj["country"] = bidderCou
                 uObj["location"] = bidderLoc
                 uObj["rating"] = str(bidder.getAttribute('Rating'))
+                #usuario
+                Users.insert_one(uObj)
+
             #sacar lo que esta dentro de bids
-        print(iObj)
+        #Objeto
+        Items.insert_one(iObj)
 
 """
 Loops through each xml files provided on the command line and passes each file
