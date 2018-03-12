@@ -43,12 +43,15 @@ Happy parsing!
 import sys
 from xml.dom.minidom import parse
 from re import sub
+from pymongo import MongoClient
 
 columnSeparator = "<>"
 categorias = []
 paises = []
+usuarios = []
 bidID = 0;
-
+client = MongoClient('localhost', 27017)
+db = client['ebay']
 # Dictionary of months used for date transformation
 MONTHS = {'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06',\
                 'Jul':'07','Aug':'08','Sep':'09','Oct':'10','Nov':'11','Dec':'12'}
@@ -186,7 +189,9 @@ def parseXml(f):
                 categorias.append(cat)
                 categoryFile.write(str(len(categorias)) + separador + cat +"\r\n")
             descCategoryFile.write(str(iID)+separador+str(categorias.index(cat))+"\r\n")
-        usersFile.write(seller+separador+sellerRating+separador+str(paises.index(sCountry))+separador+sLocation+"\r\n")
+        if seller not in usuarios:
+            usuarios.append(seller)
+            usersFile.write(seller+separador+sellerRating+separador+str(paises.index(sCountry))+separador+sLocation+"\r\n")
         buy_price = 0
         if (bp != None):
             buy_price = getElementText(bp)
@@ -200,12 +205,10 @@ def parseXml(f):
             try:
                 bidderLoc = getElementText(getElementByTagNameNR(bidder, 'Location'))
             except Exception as e:
-                print("No location boiiiiiii")
                 bidderLoc = "Null"
             try:
                 bidderCou = getElementText(getElementByTagNameNR(bidder, 'Country'))
             except Exception as e:
-                print("No PAIS boiiiiiii")
                 bidderCou = "Null"
             if bidderCou not in paises:
                 paises.append(bidderCou);
@@ -214,7 +217,9 @@ def parseXml(f):
             amount = transformDollar(getElementText(getElementByTagNameNR(j, 'Amount')))
             bidFile.write(str(bidID)+separador+iID+separador+str(bidder.getAttribute('UserID'))+separador+time+separador+amount+"\r\n")
             bidID = bidID + 1
-            usersFile.write(str(bidder.getAttribute('UserID'))+separador+str(bidder.getAttribute('Rating'))+separador+str(paises.index(bidderCou))+separador+bidderLoc+"\r\n")
+            if str(bidder.getAttribute('UserID')) not in usuarios:
+                usuarios.append(str(bidder.getAttribute('UserID')))
+                usersFile.write(str(bidder.getAttribute('UserID'))+separador+str(bidder.getAttribute('Rating'))+separador+str(paises.index(bidderCou))+separador+bidderLoc+"\r\n")
             #sacar lo que esta dentro de bids
 
 
@@ -231,7 +236,7 @@ def main(argv):
     for f in argv[1:]:
         if isXml(f):
             parseXml(f)
-            print "Success parsing " + f
+            print ("Success parsing " + f)
 
 if __name__ == '__main__':
     main(sys.argv)

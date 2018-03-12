@@ -53,6 +53,7 @@ db = client['ebay']
 columnSeparator = "<>"
 categorias = []
 paises = []
+usuarios = []
 bidID = 0;
 
 # Dictionary of months used for date transformation
@@ -166,22 +167,30 @@ def parseXml(f):
     a = getElementsByTagNameNR(dom, 'Items')
     items = getElementsByTagNameNR(a[0], 'Item')
 
-    iObj = {
-        "_id" : 0.00,
-        "name" : "",
-        "category" : [],
-        "first_bid" : 0.0,
-        "bids" : [],
-        "started" : "",
-        "ends" : "",
-        "seller" : ""
-    }
-
-    h = json.dumps(iObj)
-
-    db.Item.insert_one(iObj)
 
     for i in items:
+        #OBJETOS A SER LLENADOS
+        iObj = {
+            "_id" : 0.00,
+            "name" : "",
+            "currently":0.00,
+            "category" : [],
+            "first_bid" : 0.0,
+            "bids" : [],
+            "started" : "",
+            "ends" : "",
+            "buy_price":0.00,
+            "seller" : "",
+            "description": ""
+        }
+
+        uObj = {
+            "_id":"",
+            "country":"",
+            "location":"",
+            "rating":0
+        }
+
         global bidID
         bids =          getElementsByTagNameNR(i, 'Bids')
         bid =           getElementsByTagNameNR(bids[0], 'Bid')
@@ -194,7 +203,20 @@ def parseXml(f):
         ends =          transformDttm(getElementText(getElementByTagNameNR(i, 'Ends')))
         description =   getElementText(getElementByTagNameNR(i, 'Description'))
         bp =            getElementByTagNameNR(i, 'Buy_Price')
+
+        #Llenar el diccionario
+        iObj["_id"] = iID
+        iObj["name"] = name
+        iObj["currently"] = currently
+        iObj["first_bid"] = first
+        iObj["started"] = started
+        iObj["ends"] = ends
+        iObj["description"] = description
+
+
+        #SACAR TODO LO QUE ESTA DENTRO DEL USUARIO
         sCountry =      getElementText(getElementByTagNameNR(i, 'Country'))
+        #CONDICION PARA VER SI YA EXISTEN LOS PAISES
         if sCountry not in paises:
             paises.append(sCountry);
             countryFile.write(str(paises.index(sCountry))+separador+sCountry+"\r\n")
@@ -203,32 +225,45 @@ def parseXml(f):
         seller =        str(s.getAttribute('UserID'))
         sellerRating =  str(s.getAttribute('Rating'))
         cats = getElementsByTagNameNR(i,'Category')
+        uObj["_id"] = seller
+        uObj["country"] = sCountry
+        uObj["location"] = sLocation
+        uObj["rating"] = sellerRating
         for x in cats:
             cat = getElementText(x)
+            iObj["category"].append(cat)
             if cat not in categorias:
                 categorias.append(cat)
                 categoryFile.write(str(len(categorias)) + separador + cat +"\r\n")
             descCategoryFile.write(str(iID)+separador+str(categorias.index(cat))+"\r\n")
-        usersFile.write(seller+separador+sellerRating+separador+str(paises.index(sCountry))+separador+sLocation+"\r\n")
+        if seller not in usuarios:
+            usuarios.append(seller)
+            usersFile.write(seller+separador+sellerRating+separador+str(paises.index(sCountry))+separador+sLocation+"\r\n")
         buy_price = 0
         if (bp != None):
             buy_price = getElementText(bp)
         else:
             buy_price = 0
+        iObj['buy_price'] = buy_price
 
         itemFile.write(iID+separador+seller+separador+name+separador+currently+separador+first+separador+started+separador+ends+separador+str(buy_price)+separador+description+"\r\n")
 
+        #SACAR TODO LO QUE ESTA DENTRO DE CADA BID
         for j in bid:
+            bObj = {
+                "_id":"",
+                "bidder_id":"",
+                "time":"",
+                "amount":0.0
+            }
             bidder = getElementByTagNameNR(j, 'Bidder')
             try:
                 bidderLoc = getElementText(getElementByTagNameNR(bidder, 'Location'))
             except Exception as e:
-                print("No location boiiiiiii")
                 bidderLoc = "Null"
             try:
                 bidderCou = getElementText(getElementByTagNameNR(bidder, 'Country'))
             except Exception as e:
-                print("No PAIS boiiiiiii")
                 bidderCou = "Null"
             if bidderCou not in paises:
                 paises.append(bidderCou);
@@ -237,9 +272,20 @@ def parseXml(f):
             amount = transformDollar(getElementText(getElementByTagNameNR(j, 'Amount')))
             bidFile.write(str(bidID)+separador+iID+separador+str(bidder.getAttribute('UserID'))+separador+time+separador+amount+"\r\n")
             bidID = bidID + 1
-            usersFile.write(str(bidder.getAttribute('UserID'))+separador+str(bidder.getAttribute('Rating'))+separador+str(paises.index(bidderCou))+separador+bidderLoc+"\r\n")
+            bObj["_id"] = bidID
+            bObj["bidder_id"] = str(bidder.getAttribute('UserID'))
+            bObj["time"] = time
+            bObj["amount"] = amount
+            iObj['bids'].append(bObj)
+            if str(bidder.getAttribute('UserID')) not in usuarios:
+                usuarios.append(str(bidder.getAttribute('UserID')))
+                usersFile.write(str(bidder.getAttribute('UserID'))+separador+str(bidder.getAttribute('Rating'))+separador+str(paises.index(bidderCou))+separador+bidderLoc+"\r\n")
+                uObj["_id"] = str(bidder.getAttribute('UserID'))
+                uObj["country"] = bidderCou
+                uObj["location"] = bidderLoc
+                uObj["rating"] = str(bidder.getAttribute('Rating'))
             #sacar lo que esta dentro de bids
-
+        print(iObj)
 
 """
 Loops through each xml files provided on the command line and passes each file
@@ -254,7 +300,7 @@ def main(argv):
     for f in argv[1:]:
         if isXml(f):
             parseXml(f)
-            print "Success parsing " + f
+            print("Success parsing " + f)
 
 if __name__ == '__main__':
     main(sys.argv)
