@@ -1,1 +1,1 @@
-SELECT count(UserID) FROM User;
+db.User.count();

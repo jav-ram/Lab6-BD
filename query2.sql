@@ -1,1 +1,1 @@
-SELECT count(UserID) FROM User WHERE Location='New York';
+db.User.count({"location":"New York"})
