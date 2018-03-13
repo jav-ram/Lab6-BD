@@ -143,7 +143,7 @@ Transform a dollar value amount from a string like $3,453.23 to XXXXX.xx
 
 def transformDollar(money):
     if money == None or len(money) == 0:
-        return money
+        return "0.0"
     return sub(r'[^\d.]', '', money)
 
 
@@ -209,13 +209,11 @@ def parseXml(f):
         #Llenar el diccionario
         iObj["_id"] = iID
         iObj["name"] = name
-        iObj["currently"] = currently
-        iObj["first_bid"] = first
+        iObj["currently"] = float(currently)
+        iObj["first_bid"] = float(first)
         iObj["started"] = started
         iObj["ends"] = ends
         iObj["description"] = description
-
-
 
         #SACAR TODO LO QUE ESTA DENTRO DEL USUARIO
         sCountry =      getElementText(getElementByTagNameNR(i, 'Country'))
@@ -232,6 +230,7 @@ def parseXml(f):
         uObj["country"] = sCountry
         uObj["location"] = sLocation
         uObj["rating"] = sellerRating
+        iObj["seller"] = seller
         for x in cats:
             cat = getElementText(x)
             iObj["category"].append(cat)
@@ -248,8 +247,8 @@ def parseXml(f):
         if (bp != None):
             buy_price = getElementText(bp)
         else:
-            buy_price = 0
-        iObj['buy_price'] = buy_price
+            buy_price = "0.0"
+        iObj['buy_price'] = float(transformDollar(buy_price))
 
         itemFile.write(iID+separador+seller+separador+name+separador+currently+separador+first+separador+started+separador+ends+separador+str(buy_price)+separador+description+"\r\n")
 
@@ -275,10 +274,10 @@ def parseXml(f):
             time = transformDttm(getElementText(getElementByTagNameNR(j, 'Time')))
             amount = transformDollar(getElementText(getElementByTagNameNR(j, 'Amount')))
             bidFile.write(str(bidID)+separador+iID+separador+str(bidder.getAttribute('UserID'))+separador+time+separador+amount+"\r\n")
-            
+
             bObj["bidder_id"] = str(bidder.getAttribute('UserID'))
             bObj["time"] = time
-            bObj["amount"] = amount
+            bObj["amount"] = float(amount)
             iObj['bids'].append(bObj)
             if str(bidder.getAttribute('UserID')) not in usuarios:
                 usuarios.append(str(bidder.getAttribute('UserID')))
@@ -286,7 +285,7 @@ def parseXml(f):
                 uObj["_id"] = str(bidder.getAttribute('UserID'))
                 uObj["country"] = bidderCou
                 uObj["location"] = bidderLoc
-                uObj["rating"] = str(bidder.getAttribute('Rating'))
+                uObj["rating"] = float(str(bidder.getAttribute('Rating')))
                 #usuario
                 Users.insert_one(uObj)
 
